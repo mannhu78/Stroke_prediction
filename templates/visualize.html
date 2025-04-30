@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Trực quan hóa dữ liệu</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/menu.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/footer.css') }}">
+    <style>
+        body {
+            padding-top: 100px;
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+        }
+    
+        /* Form và ảnh */
+        h2, h3 {
+            text-align: center;
+            margin-top: 30px;
+        }
+    
+        form {
+            width: 60%;
+            margin: 30px auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+    
+        form label {
+            font-weight: bold;
+        }
+    
+        form input[type="file"] {
+            margin-top: 10px;
+            margin-bottom: 15px;
+        }
+    
+        form button {
+            background-color: #1d1e1f;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+        }
+    
+        form button:hover {
+            background-color: #f1c40f;
+            color: black;
+        }
+    
+        img {
+            display: block;
+            margin: 20px auto;
+            max-width: 90%;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+    
+        
+      
+        .navbar-brand p {
+            margin-top: -50px;
+            margin-left: 40px;
+        }
+    </style>
+    
+</head>
+<body>
+    {% include 'menu.html' %}
+    <h2>📊 Trực quan hóa dữ liệu đột quỵ</h2>
+    <form action="/visualize" method="POST" enctype="multipart/form-data">
+        <label>Chọn file dữ liệu (.csv):</label>
+        <input type="file" name="file" accept=".csv" required>
+        <button type="submit">Tải lên & Phân tích</button>
+    </form>
+    <hr>
+    {% if img_paths %}
+        <h3>📈 Kết quả Trực quan:</h3>
+        {% for img in img_paths %}
+            <img src="{{ url_for('static', filename=img) }}" width="600"><br><br>
+        {% endfor %}
+    {% endif %}
+
+    {% include 'footer.html' %}
+   
+</body>
+</html>

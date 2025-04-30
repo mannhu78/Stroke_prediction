@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Phân tích khuôn mặt</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/menu.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/footer.css') }}">
+    <style>
+        h2, h3, h4 {
+            color: #2c3e50;
+            text-align: center;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        form {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        input[type="file"] {
+            margin: 10px 0;
+            font-size: 16px;
+        }
+
+        button {
+            background-color: #1f2122;
+            color: white;
+            padding: 10px 18px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #4c5155;
+        }
+
+        video {
+            display: block;
+            margin: 0 auto 10px auto;
+            border-radius: 8px;
+            box-shadow: 0 0 6px rgba(0, 0, 0, 0.15);
+        }
+
+        img {
+            display: block;
+            margin: 20px auto;
+            border-radius: 8px;
+            max-width: 100%;
+            height: auto;
+        }
+
+        p {
+            text-align: center;
+            font-size: 16px;
+        }
+
+        .navbar-brand p {
+                    margin-top: -50px;
+                    margin-left: 40px;
+                    font-size: 20px;
+                }
+    </style>
+</head>
+<body>
+    {% include 'menu.html' %}
+    <div class="container">
+    <h2> Phân tích khuôn mặt bằng ảnh</h2>
+    <form action="/analyze-face" method="POST" enctype="multipart/form-data">
+        <input type="file" name="image" accept="image/*" required>
+        <button type="submit">Phân tích</button>
+    </form>
+
+    <hr>
+    <h2> Phân tích khuôn mặt bằng webcam </h2>
+<!-- Nút hiện webcam -->
+<button style=" margin-left: 300px;" type="button" onclick="showWebcam() ">📷 Chụp bằng webcam</button>
+
+<!-- Webcam và nút chụp sẽ ẩn ban đầu -->
+<div id="webcam-section" style="display: none; margin-top: 20px;">
+    <video id="webcam" autoplay width="400"></video>
+    <br>
+    <canvas id="canvas" style="display:none;"></canvas>
+    <button style=" margin-left: 300px;" onclick="captureImage()">📸 Chụp ảnh và phân tích</button>
+
+    <form id="webcam-form" action="/analyze-face-webcam" method="POST">
+        <input type="hidden" name="image_data" id="image_data">
+    </form>
+</div>
+
+
+<script>
+    let streamStarted = false;
+
+    function showWebcam() {
+        const section = document.getElementById('webcam-section');
+        section.style.display = 'block';
+
+        if (!streamStarted) {
+            const webcam = document.getElementById('webcam');
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(stream => {
+                    webcam.srcObject = stream;
+                    streamStarted = true;
+                })
+                .catch(err => {
+                    alert("Không thể truy cập webcam: " + err);
+                });
+        }
+    }
+
+    function captureImage() {
+        const webcam = document.getElementById('webcam');
+        const canvas = document.getElementById('canvas');
+        const targetWidth = 400;
+        const targetHeight = webcam.videoHeight * (400 / webcam.videoWidth);
+        
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
+        canvas.getContext('2d').drawImage(webcam, 0, 0, targetWidth, targetHeight);
+        
+        const dataURL = canvas.toDataURL('image/jpeg', 0.7);
+        document.getElementById('image_data').value = dataURL;
+        document.getElementById('webcam-form').submit();
+
+    }
+
+   
+</script>
+
+
+    {% if error %}
+        <p style="color: red;">{{ error }}</p>
+    {% endif %}
+
+    {% if result_img %}
+        <h4>Kết quả phân tích:</h4>
+        <img src="{{ url_for('static', filename=result_img) }}" width="400">
+        <p>{{ diagnosis }}</p>
+        <p>Độ lệch miệng: {{ mouth_diff }}</p>
+        <p>Chiều cao môi: {{ lip_height }}</p>
+    {% endif %}
+    </div>
+    
+    {% include 'footer.html' %}
+
+</body>
+</html>

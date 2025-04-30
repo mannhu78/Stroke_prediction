@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Lịch sử dự đoán</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/menu.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/footer.css') }}">
+</head>
+<body>
+    {% include 'menu.html' %}
+
+<div class="container mt-5">
+    <h2 class="text-center mb-4"> Lịch sử dự đoán của bạn</h2>
+
+     <!-- Form chọn ngày -->
+     <div class="mb-4">
+        <form method="POST" class="row g-3 align-items-center">
+            <div class="col-auto">
+                <label for="selected_date" class="form-label">Chọn ngày:</label>
+                <input type="date" id="selected_date" name="selected_date" class="form-control" value="{{ selected_date }}">
+            </div>
+            <div class="col-auto mt-4">
+                <button type="submit" class="btn btn-success">Lọc</button>
+            </div>
+        </form>
+    </div>
+
+    {% if selected_date %}
+    <div class="text-center mb-3">
+        <a href="{{ url_for('history') }}" class="btn btn-outline-secondary">Xóa bộ lọc</a>
+    </div>
+    {% endif %}
+
+    {% if history and history|length > 0 %}
+
+    <table class="table table-hover table-bordered">
+        <thead class="table-dark">
+            <tr>
+                <th>Thời gian</th>
+                <th>Nguy cơ đột quỵ (%)</th>
+                <th>Thông tin đầu vào</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for record in history %}
+    {% set field_mapping = {
+        'gender': 'Giới tính',
+        'age': 'Tuổi',
+        'hypertension': 'Tăng huyết áp',
+        'heart_disease': 'Bệnh tim',
+        'ever_married': 'Tình trạng hôn nhân',
+        'work_type': 'Loại công việc',
+        'Residence_type': 'Nơi ở',
+        'avg_glucose_level': 'Mức đường huyết trung bình',
+        'bmi': 'Chỉ số BMI',
+        'smoking_status': 'Tình trạng hút thuốc'
+    } %}
+
+    {% set value_mapping = {
+        'gender': {0: 'Nam', 1: 'Nữ'},
+        'hypertension': {0: 'Không', 1: 'Có'},
+        'heart_disease': {0: 'Không', 1: 'Có'},
+        'ever_married': {0: 'Chưa kết hôn', 1: 'Đã kết hôn'},
+        'work_type': {0: 'Việc văn phòng', 1: 'Công nhân', 2: 'Tự kinh doanh', 3: 'Trẻ em', 4: 'Khác'},
+        'Residence_type': {0: 'Nông thôn', 1: 'Thành thị'},
+        'smoking_status': {0: 'Không hút thuốc', 1: 'Đang hút thuốc', 2: 'Đã từng hút', 3: 'Không xác định'}
+    } %}
+
+    <tr>
+        <td>{{ record['timestamp'] }}</td>
+        <td><strong>{{ record['result'] }}%</strong></td>
+        <td>
+            <ul class="mb-0">
+                {% for k, v in record.items() if k not in ['id', 'user_id', 'result', 'timestamp'] %}
+                    <li>
+                        <strong>{{ field_mapping.get(k, k.replace('_', ' ') | capitalize) }}:</strong> 
+                        {% if value_mapping.get(k) %}
+                            {{ value_mapping[k].get(v|int, v) }}
+                        {% else %}
+                            {{ v }}
+                        {% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+        </td>
+    </tr>
+{% endfor %}
+
+        </tbody>
+    </table>
+
+{% else %}
+    <div class="alert alert-warning text-center">
+         Bạn chưa có lịch sử dự đoán nào.
+    </div>
+{% endif %}
+
+
+    <div class="d-flex justify-content-center mt-4">
+        <a href="/predict" class="btn btn-primary"> Quay lại dự đoán</a>
+    </div>
+</div>
+
+{% include 'footer.html' %}
+</body>
+</html>

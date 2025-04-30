@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dự đoán nguy cơ đột quỵ</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/menu.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/footer.css') }}">
+</head>
+<body>
+
+    {% include 'menu.html' %}
+
+<div class="container mt-5">
+    <h2 class="mb-4 text-center">Dự đoán nguy cơ đột quỵ</h2>
+   
+    {% if result is defined %}
+        <div class="alert alert-info">
+            Nguy cơ đột quỵ ước tính: <strong>{{ result }}%</strong>
+        </div>
+    {% endif %}
+    <form method="POST">
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label>Giới tính:</label>
+                <select name="gender" class="form-select">
+                    <option value="1">Nam</option>
+                    <option value="0">Nữ</option>
+                    <option value="2">Khác</option>
+                </select>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label>Tuổi:</label>
+                <input type="number" name="age" class="form-control" required>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label>Huyết áp cao:</label>
+                <select name="hypertension" class="form-select">
+                    <option value="1">Có</option>
+                    <option value="0">Không</option>
+                </select>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label>Bệnh tim:</label>
+                <select name="heart_disease" class="form-select">
+                    <option value="1">Có</option>
+                    <option value="0">Không</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label>Tình trạng hôn nhân:</label>
+            <select name="ever_married" class="form-select">
+                <option value="1">Đã kết hôn</option>
+                <option value="0">Chưa kết hôn</option>
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label>Loại công việc:</label>
+            <select name="work_type" class="form-select">
+                <option value="0">Trẻ em/Học sinh/Sinh viên</option>
+                <option value="1">Nhân viên</option>
+                <option value="2">Tư nhân</option>
+                <option value="3">Tự kinh doanh</option>
+                <option value="4">Không có</option>
+                <option value="4">Khác</option>
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label>Khu vực sinh sống:</label>
+            <select name="Residence_type" class="form-select">
+                <option value="1">Thành thị</option>
+                <option value="0">Nông thôn</option>
+            </select>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label>Mức đường huyết trung bình:</label>
+                <input type="number" step="0.01" name="avg_glucose_level" class="form-control" required>
+            </div>
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label>Chiều cao (cm):</label>
+                    <input type="number" step="0.1" name="height" id="height" class="form-control" required>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label>Cân nặng (kg):</label>
+                    <input type="number" step="0.1" name="weight" id="weight" class="form-control" required>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label>Chỉ số BMI:</label>
+                    <input type="number" step="0.1" id="bmi" class="form-control" readonly>
+                </div>
+            </div>
+            
+        </div>
+
+        <div class="mb-4">
+            <label>Thói quen hút thuốc:</label>
+            <select name="smoking_status" class="form-select">
+                <option value="1">Từng hút</option>
+                <option value="2">Chưa từng hút</option>
+                <option value="3">Đang hút</option>
+                <option value="0">Không rõ</option>
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Dự đoán</button>
+        
+        
+    </form>
+    <div class="d-flex justify-content-center mt-4">
+            <a href="/history" class="btn btn-outline-primary">📜 Xem lịch sử dự đoán</a>
+        </div>
+</div>
+{% include 'footer.html' %}
+
+<script>
+    function calculateBMI() {
+        const height = parseFloat(document.getElementById('height').value);
+        const weight = parseFloat(document.getElementById('weight').value);
+    
+        if (height > 0 && weight > 0) {
+            const height_m = height / 100;
+            const bmi = weight / (height_m * height_m);
+            document.getElementById('bmi').value = bmi.toFixed(1);
+        } else {
+            document.getElementById('bmi').value = '';
+        }
+    }
+    
+    // Gắn sự kiện tính BMI mỗi khi nhập chiều cao hoặc cân nặng
+    document.getElementById('height').addEventListener('input', calculateBMI);
+    document.getElementById('weight').addEventListener('input', calculateBMI);
+    </script>
+    
+
+</body>
+
+</html>
+

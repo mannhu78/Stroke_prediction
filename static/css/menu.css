@@ -1,0 +1,59 @@
+
+.navbar-custom {
+    background-color: #1d1e1f;
+}
+
+.navbar-custom .navbar-brand,
+.navbar-custom .nav-link,
+.navbar-custom .navbar-text {
+    color: white;
+}
+
+.navbar-custom .nav-link:hover {
+    color: #f1c40f;
+}
+
+.menu a {
+    margin-left: 10px;
+}
+
+
+
+body {
+padding-top: 100px; /* Tránh bị navbar che mất nội dung */
+}
+
+.navbar-custom {
+background-color: #1d1e1f;
+height: 100px;
+transition: box-shadow 0.3s ease;
+z-index: 1000;
+}
+
+.shadow-scroll {
+box-shadow: none;
+}
+
+.shadow-scroll.scrolled {
+box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+.navbar-custom {
+transition: all 0.3s ease;
+}
+
+.navbar-custom.shrink {
+height: 70px;
+padding-top: 10px;
+padding-bottom: 10px;
+box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.navbar-custom {
+background-color:#1d1e1f  ;
+transition: background-color 0.3s ease;
+}
+
+.navbar-custom.scrolled {
+background-color: #494949;
+box-shadow: 0 4px 8px rgba(2, 2, 2, 0.3);
+}

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Dự đoán nguy cơ đột quỵ</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Bootstrap 5 CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/menu.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/footer.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/banner.css') }}">
+    <style>
+        body {
+            font-family: "Segoe UI", sans-serif;
+            background-color: #f4f6f9;
+            margin: 0;
+            padding: 0;
+        }
+
+     
+        header {
+            background-color: #141414;
+            color: white;
+            text-align: center;
+            padding: 40px 10px;
+        }
+
+        section {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 40px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        h1, h2 {
+            color: #7e1313;
+        }
+
+       
+        body {
+   padding-top: 100px; /* Tránh bị navbar che mất nội dung */
+}
+
+
+    </style>
+</head>
+<body>
+
+    {% include 'menu.html' %}
+
+   
+<div class="banner-header" style="background-image: url({{ url_for('static', filename='imgs/banner.jpg') }});">
+    <div class="overlay">
+        Hệ Thống Dự Đoán Nguy Cơ Đột Quỵ
+    </div>
+</div>
+
+ 
+<section>
+    <h2>Giới thiệu</h2>
+    <p>Đột quỵ là một trong những nguyên nhân hàng đầu gây tử vong và tàn tật trên toàn thế giới. Việc phát hiện sớm nguy cơ đột quỵ có thể giúp can thiệp kịp thời và giảm thiểu hậu quả nghiêm trọng.</p>
+    
+    <p>Hệ thống của chúng tôi sử dụng trí tuệ nhân tạo và mô hình học máy để phân tích các yếu tố sức khỏe và khuôn mặt nhằm dự đoán xác suất xảy ra đột quỵ. Người dùng chỉ cần cung cấp một ảnh chân dung và thông tin y tế cơ bản như: tuổi, giới tính, chỉ số BMI, huyết áp, tình trạng bệnh nền,...</p>
+
+    <h2>Tính năng chính</h2>
+    <ul>
+        <li>Phân tích ảnh khuôn mặt bằng mô hình nhận diện đặc trưng.</li>
+        <li>Dự đoán nguy cơ đột quỵ từ dữ liệu y tế cá nhân.</li>
+        <li>Hiển thị kết quả và gợi ý chăm sóc sức khỏe.</li>
+    </ul>
+    <h2>Đột quỵ là gì ?</h2>
+    <p>Đột quỵ (stroke) là một tình trạng y khoa khẩn cấp xảy ra khi lưu lượng máu đến một phần của não bị gián đoạn hoặc giảm nghiêm trọng, dẫn đến tổn thương tế bào não. <b>Có hai loại chính:</b>
+    </p>
+    <ul>
+        <b><p>Đột quỵ thiếu máu cục bộ (nhồi máu não): Chiếm khoảng 80-85% trường hợp, xảy ra khi một mạch máu cung cấp máu cho não bị tắc, thường do cục máu đông hoặc mảng xơ vữa. Nguyên nhân phổ biến bao gồm:</p></b>
+        <li>Huyết khối (cục máu đông hình thành tại chỗ).</li>
+        <li>Tắc mạch (cục máu đông từ nơi khác, ví dụ từ tim, di chuyển đến não).</li>
+        <li>Hẹp động mạch do xơ vữa.</li>
+        <br>
+        <b><p>Đột quỵ xuất huyết (chảy máu não): Xảy ra khi một mạch máu trong hoặc quanh não bị vỡ, gây chảy máu, làm tăng áp lực lên mô não. Nguyên nhân thường gặp:</p></b>
+        <li>Cao huyết áp không kiểm soát.</li>
+        <li>Phình động mạch (aneurysm) vỡ.</li>
+        <li>Dị dạng mạch máu.</li>
+    </ul>
+    <h2>Triệu chứng thường gặp</h2>
+    <p>Triệu chứng chung của đột quỵ <b>(dùng FAST để nhận biết):</b></p>
+    <img src="{{ url_for('static', filename='imgs/fast.webp') }}" alt="FAST Stroke Symptoms" style="width: 60%; display: block; margin: 20px auto;">
+    <ul>
+        <li>Face (Mặt): Mặt méo, một bên miệng xệ xuống khi cười.</li>
+        <li>Arms (Tay): Yếu hoặc không nâng được một tay.</li>
+        <li>Speech (Lời nói): Nói khó, nói ngọng, hoặc không nói được.</li>
+        <li>Time (Thời gian): Gọi cấp cứu ngay nếu thấy các dấu hiệu trên.</li>
+    </ul>
+    
+    <p>Ngoài ra, có thể gặp:</p>
+    <ul>
+        <li>Đau đầu đột ngột, dữ dội.</li>
+        <li>Mất thị lực một bên hoặc mờ mắt.</li>
+        <li>Chóng mặt, mất thăng bằng.</li>
+        <li>Tê hoặc yếu đột ngột ở một bên cơ thể (mặt, tay, chân).</li>
+        <li>Mất ý thức hoặc lú lẫn.</li>
+    </ul>
+    <b><p>Nếu thấy bất kỳ dấu hiệu nào, cần xử lý khẩn cấp.</p></b>
+    
+</section>
+
+{% include 'footer.html' %}
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+
+</html>

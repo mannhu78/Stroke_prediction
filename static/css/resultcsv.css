@@ -1,0 +1,89 @@
+.result-container {
+    background: #ffffff;
+   width: 100%;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.result-container h2 {
+    font-weight: bold;
+    color: #273038;
+    margin-bottom: 50px;
+    margin-left: 50px;
+}
+
+.result-container table {
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.result-container th {
+    background-color: #253546;
+    color: #ffffff;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.result-container td {
+    text-align: center;
+    vertical-align: middle;
+}
+
+.result-container .btn {
+    background-color: #171a18;
+    color: white;
+    font-weight: bold;
+    border-radius: 25px;
+    padding: 10px 20px;
+}
+
+.result-container .btn:hover {
+    background-color: #28302a;
+}
+/* Ẩn các kết quả bổ sung */
+.hidden {
+    display: none;
+}
+
+#load-more {
+    width: 50%;
+    text-align: center;
+    margin-top: 15px;
+}
+body{
+    width: 100%;
+    
+}
+.fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+}
+@keyframes fadeIn {
+    from {opacity: 0;}
+    to {opacity: 1;}
+}
+#chart-container {
+    max-width: 600px;
+    margin: 20px auto;
+    padding: 20px;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+#prediction-chart {
+    width: 100% !important;
+    height: auto !important;
+}
+.button_continute{
+    margin-left: 400px;
+}
+
+.btn.btn-primary.mt-3 {
+    margin-left: 785px;
+    
+}
+
+.my-4{
+margin-top: 400px;
+}

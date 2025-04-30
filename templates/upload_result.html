@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Kết quả dự đoán</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/menu.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/footer.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/resultcsv.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+
+</head>
+<body>
+    {% include 'menu.html' %}
+
+<div class="container mt-5 result-container">
+    <h2 class="mb-4 text-center">Kết quả dự đoán từ file CSV</h2>
+
+    {% set header_mapping = {
+        'ma_benh_nhan': 'Mã bệnh nhân',
+        'gioi_tinh': 'Giới tính',
+        'tuoi': 'Tuổi',
+        'huyet_ap':'Huyết áp cao',
+        'benh_tim': 'Bệnh tim',
+        'hon_nhan': 'Tình trạng hôn nhân',
+        'cong_viec': 'Công việc',
+        'noi_o': 'Nơi ở',
+        'muc_duong_huyet': 'Mức đường huyết',
+        'bmi': 'Chỉ số BMI',
+        'hut_thuoc': 'Tình trạng hút thuốc',
+        'nguy_co_dot_quy': 'Nhãn thực tế',
+        'phan_tram_du_doan': 'Nguy cơ đột quỵ (%)'
+    } %}
+
+    {% set value_mapping = {
+        'gioi_tinh': {0: 'Nam', 1: 'Nữ'},
+        'huyet_ap':{0: 'Không', 1: 'Có'},
+        'benh_tim': {0: 'Không', 1: 'Có'},
+        'hon_nhan': {0: 'Chưa kết hôn', 1: 'Đã kết hôn'},
+        'cong_viec': {0: 'Việc văn phòng', 1: 'Công nhân', 2: 'Tự kinh doanh', 3: 'Trẻ em', 4: 'Khác'},
+        'noi_o': {0: 'Nông thôn', 1: 'Thành thị'},
+        'hut_thuoc': {0: 'Không hút thuốc', 1: 'Đang hút thuốc', 2: 'Đã từng hút', 3: 'Không xác định'}
+    } %}
+
+    {% if results %}
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    {% for col in results[0].keys() %}
+                        <th>{{ header_mapping.get(col, col) }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody id="result-table-body">
+                {% for row in results %}
+                    <tr class="result-row {% if loop.index0 >= 10 %}hidden{% endif %}">
+                        {% for key, val in row.items() %}
+                            <td 
+                            {% if key == 'phan_tram_du_doan' %}
+                            {% if val > 70 %}
+                                style="background-color: #dc3545; color: white;"
+                            {% elif val > 50 %}
+                                style="background-color: #fd7e14; color: white;"
+                            {% elif val > 30 %}
+                                style="background-color: #ffc107; color: black;"
+                            {% endif %}
+                        {% endif %}
+                        
+                            >
+                                {% if value_mapping.get(key) %}
+                                    {{ value_mapping[key].get(val|int, val) }}
+                                {% else %}
+                                    {{ val }}
+                                {% endif %}
+                            </td>
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+<div class="button_continute">
+        {% if results|length > 10 %}
+            <button id="load-more" class="btn btn-info mt-3">Xem thêm</button>
+        {% endif %}
+    {% else %}
+        <p>Không có kết quả để hiển thị.</p>
+    {% endif %}
+<br>
+    
+</div>
+
+    <div class="text-center my-4">
+        <h2 class="fw-bold mb-4" style="font-size: 2rem; color: #333;margin-top: 70px;"> Biểu đồ phân tích</h2>
+    
+        <div class="btn-group flex-wrap" role="group" aria-label="Biểu đồ">
+            <button class="btn btn-outline-primary m-1 chart-btn" data-chart="strokeRate">Tỉ lệ đột quỵ</button>
+            
+            <button class="btn btn-outline-primary m-1 chart-btn" data-chart="workVsStroke"> Nghề nghiệp & Tỉ Lệ Đột Quỵ</button>
+           
+            <button class="btn btn-outline-primary m-1 chart-btn" data-chart="heartVsStroke"> Bệnh tim & Tỉ Lệ Đột Quỵ</button>
+            <button class="btn btn-outline-primary m-1 chart-btn" data-chart="smokeVsStroke"> Hút thuốc & Tỉ Lệ Đột Quỵ</button>
+        </div>
+    </div>
+    
+    <div id="chart-container">
+        <canvas id="prediction-chart"></canvas>
+    </div>
+
+    <a href="/upload" class="btn btn-success mt-3">Quay lại tải lên</a>
+    <a href="{{ download_link }}" class="btn btn-primary mt-3">Tải kết quả CSV</a>
+</div>
+
+
+
+
+<script>
+    let myChart; // Biến lưu biểu đồ hiện tại
+let initialChartDrawn = false; // Biến kiểm soát việc render chart ban đầu
+
+document.addEventListener("DOMContentLoaded", function () {
+    const chartContainer = document.getElementById("chart-container");
+    const loadMoreBtn = document.getElementById("load-more");
+    const showChartBtn = document.getElementById("show-chart");
+    const rows = document.querySelectorAll(".result-row");
+    let currentVisible = 10;
+    const batchSize = 10;
+
+    // Bắt sự kiện các nút biểu đồ
+    document.querySelectorAll('.chart-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const chartType = this.dataset.chart;
+            chartContainer.style.display = "block";
+
+            if (myChart) {
+                myChart.destroy();
+            }
+
+            switch (chartType) {
+                case 'strokeRate':
+                    renderStrokeRateChart();
+                    break;
+                case 'ageByGender':
+                    renderAgeByGenderChart();
+                    break;
+                case 'workVsStroke':
+                    renderWorkVsStrokeChart();
+                    break;
+                case 'correlationMatrix':
+                    renderCorrelationMatrix();
+                    break;
+                case 'heartVsStroke':
+                    renderHeartVsStrokeChart();
+                    break;
+                case 'smokeVsStroke':
+                    renderSmokeVsStrokeChart();
+                    break;
+                default:
+                    break;
+            }
+        });
+    });
+
+    // Nút "Xem thêm"
+    loadMoreBtn?.addEventListener("click", function () {
+        let revealed = 0;
+        for (let i = currentVisible; i < rows.length && revealed < batchSize; i++) {
+            rows[i].classList.remove("hidden");
+            rows[i].classList.add("fade-in");
+            revealed++;
+        }
+        currentVisible += batchSize;
+
+        if (currentVisible >= rows.length) {
+            loadMoreBtn.style.display = "none";
+        }
+    });
+
+    // Nút "Xem biểu đồ tổng"
+    showChartBtn?.addEventListener("click", function () {
+        chartContainer.style.display = "block";
+        showChartBtn.disabled = true;
+        showChartBtn.style.display = "none";
+
+        if (!initialChartDrawn) {
+            renderMainChart();
+            initialChartDrawn = true;
+        }
+    });
+});
+
+// ======================================
+// Các hàm vẽ biểu đồ cụ thể
+// ======================================
+
+// 1. Biểu đồ tỉ lệ đột quỵ
+function renderStrokeRateChart() {
+    const ctx = document.getElementById('prediction-chart').getContext('2d');
+    if (window.myChart) {
+        window.myChart.destroy();
+    }
+
+    const strokeYes = {{ results|selectattr('nguy_co_dot_quy', 'equalto', 1)|list|length }};
+    const strokeNo = {{ results|selectattr('nguy_co_dot_quy', 'equalto', 0)|list|length }};
+    const total = strokeYes + strokeNo;
+
+    window.myChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: ['Có đột quỵ', 'Không đột quỵ'],
+            datasets: [{
+                data: [strokeYes, strokeNo],
+                backgroundColor: ['#ff6384', '#36a2eb']
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.label || '';
+                            let value = context.raw;
+                            let percentage = (value / total * 100).toFixed(1) + '%';
+                            return `${label}: ${value} (${percentage})`;
+                        }
+                    }
+                },
+                datalabels: {
+                    color: '#fff',
+                    formatter: function(value, context) {
+                        let percentage = (value / total * 100).toFixed(1);
+                        return percentage + '%';
+                    },
+                    font: {
+                        weight: 'bold',
+                        size: 16
+                    }
+                }
+            }
+        },
+        plugins: [ChartDataLabels]  // Chú ý: cần khai báo plugin ở đây nữa
+    });
+}
+
+
+// 2. Biểu đồ tuổi theo giới tính
+function renderAgeByGenderChart() {
+    const ctx = document.getElementById('prediction-chart').getContext('2d');
+    const males = {{ results|selectattr('gioi_tinh', 'equalto', 0)|map(attribute='tuoi')|list }};
+    const females = {{ results|selectattr('gioi_tinh', 'equalto', 1)|map(attribute='tuoi')|list }};
+
+    myChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Nam', 'Nữ'],
+            datasets: [{
+                label: 'Tuổi trung bình',
+                data: [
+                    males.reduce((a, b) => a + b, 0) / (males.length || 1),
+                    females.reduce((a, b) => a + b, 0) / (females.length || 1)
+                ],
+                backgroundColor: ['#4bc0c0', '#ff9f40']
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: { y: { beginAtZero: true } }
+        }
+    });
+}
+
+// 3. Nghề nghiệp & đột quỵ
+function renderWorkVsStrokeChart() {
+    const ctx = document.getElementById('prediction-chart').getContext('2d');
+    const labels = ['Văn phòng', 'Công nhân', 'Tự kinh doanh', 'Trẻ em', 'Khác'];
+    const data = [0, 0, 0, 0, 0];
+
+    {% for row in results %}
+        {% if row.nguy_co_dot_quy == 1 %}
+            data[{{ row.cong_viec }}]++;
+        {% endif %}
+    {% endfor %}
+
+    if (window.myChart) {
+        window.myChart.destroy();
+    }
+
+    window.myChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Số ca đột quỵ',
+                data: data,
+                backgroundColor: '#9966ff'
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            scales: {
+                x: { beginAtZero: true }
+            },
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Tỉ lệ đột quỵ theo nghề nghiệp'
+                },
+                legend: { display: false },
+                datalabels: {
+                    anchor: 'end',
+                    align: 'right',
+                    color: '#000',
+                    formatter: (value, context) => {
+                        const total = context.chart.data.datasets[0].data.reduce((sum, val) => sum + val, 0);
+                        const percent = total > 0 ? (value / total * 100).toFixed(1) + '%' : '0%';
+                        return percent;
+                    },
+                    font: {
+                        weight: 'bold'
+                    }
+                }
+            }
+        },
+        plugins: [ChartDataLabels]
+    });
+}
+
+// 4. Ma trận tương quan BMI vs Mức đường huyết
+function renderCorrelationMatrix() {
+    const ctx = document.getElementById('prediction-chart').getContext('2d');
+
+    const dataPoints = [
+        {% for row in results %}
+            { x: {{ row.bmi }}, y: {{ row.muc_duong_huyet }} },
+        {% endfor %}
+    ];
+
+    myChart = new Chart(ctx, {
+        type: 'scatter',
+        data: {
+            datasets: [{
+                label: 'BMI vs Mức đường huyết',
+                data: dataPoints,
+                backgroundColor: '#ff6384'
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                x: { title: { display: true, text: 'BMI' }},
+                y: { title: { display: true, text: 'Mức đường huyết' }}
+            }
+        }
+    });
+}
+
+// 5. Tỉ lệ đột quỵ theo bệnh tim
+function renderHeartVsStrokeChart() {
+    const ctx = document.getElementById('prediction-chart').getContext('2d');
+    const heartYes = {{ results|selectattr('benh_tim', 'equalto', 1)|selectattr('nguy_co_dot_quy', 'equalto', 1)|list|length }};
+    const heartNo = {{ results|selectattr('benh_tim', 'equalto', 0)|selectattr('nguy_co_dot_quy', 'equalto', 1)|list|length }};
+
+    if (window.myChart) {
+        window.myChart.destroy();
+    }
+
+    window.myChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: ['Có bệnh tim', 'Không bệnh tim'],
+            datasets: [{
+                data: [heartYes, heartNo],
+                backgroundColor: ['#ffcd56', '#36a2eb']
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Tỉ lệ đột quỵ theo tình trạng bệnh tim'
+                },
+                legend: {
+                    position: 'bottom'
+                },
+                datalabels: {
+                    color: '#000',
+                    formatter: (value, context) => {
+                        const data = context.chart.data.datasets[0].data;
+                        const total = data.reduce((sum, val) => sum + val, 0);
+                        const percentage = (value / total * 100).toFixed(1) + '%';
+                        return percentage;
+                    },
+                    font: {
+                        weight: 'bold'
+                    }
+                }
+            }
+        },
+        plugins: [ChartDataLabels]
+    });
+}
+
+
+// 6. Tỉ lệ đột quỵ theo tình trạng hút thuốc
+function renderSmokeVsStrokeChart() {
+    const ctx = document.getElementById('prediction-chart').getContext('2d');
+    const labels = ['Không hút', 'Đang hút', 'Đã từng hút', 'Không xác định'];
+    const data = [0, 0, 0, 0];
+
+    {% for row in results %}
+        {% if row.nguy_co_dot_quy == 1 %}
+            data[{{ row.hut_thuoc }}]++;
+        {% endif %}
+    {% endfor %}
+
+    if (window.myChart) {
+        window.myChart.destroy();
+    }
+
+    window.myChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: data,
+                backgroundColor: ['#36a2eb', '#ff6384', '#ff9f40', '#4bc0c0']
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Tỉ lệ đột quỵ theo tình trạng hút thuốc'
+                },
+                legend: {
+                    position: 'bottom'
+                },
+                datalabels: {
+                    color: '#000',
+                    formatter: (value, context) => {
+                        const dataset = context.chart.data.datasets[0].data;
+                        const total = dataset.reduce((sum, val) => sum + val, 0);
+                        const percent = total > 0 ? (value / total * 100).toFixed(1) + '%' : '0%';
+                        return percent;
+                    },
+                    font: {
+                        weight: 'bold'
+                    }
+                }
+            }
+        },
+        plugins: [ChartDataLabels]
+    });
+}
+
+
+// 7. Biểu đồ tổng ban đầu: phần trăm nguy cơ đột quỵ
+function renderMainChart() {
+    const ctx = document.getElementById('prediction-chart').getContext('2d');
+
+    const labels = [{% for item in results %}'{{ item.ma_benh_nhan }}'{% if not loop.last %}, {% endif %}{% endfor %}];
+    const dataPoints = [{% for item in results %}{{ item.phan_tram_du_doan }}{% if not loop.last %}, {% endif %}{% endfor %}];
+
+    if (labels.length > 0 && dataPoints.length > 0) {
+        myChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Nguy cơ đột quỵ (%)',
+                    data: dataPoints,
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    }
+}
+
+</script>
+{% include 'footer.html' %}
+</body>
+</html>
