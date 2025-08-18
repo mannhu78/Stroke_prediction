@@ -44,58 +44,60 @@
         </thead>
         <tbody>
             {% for record in history %}
-    {% set field_mapping = {
-        'gender': 'Giới tính',
-        'age': 'Tuổi',
-        'hypertension': 'Tăng huyết áp',
-        'heart_disease': 'Bệnh tim',
-        'ever_married': 'Tình trạng hôn nhân',
-        'work_type': 'Loại công việc',
-        'Residence_type': 'Nơi ở',
-        'avg_glucose_level': 'Mức đường huyết trung bình',
-        'bmi': 'Chỉ số BMI',
-        'smoking_status': 'Tình trạng hút thuốc'
-    } %}
+            {% set field_mapping = {
+                'gender': 'Giới tính',
+                'age': 'Tuổi',
+                'hypertension': 'Tăng huyết áp',
+                'heart_disease': 'Bệnh tim',
+                'ever_married': 'Tình trạng hôn nhân',
+                'work_type': 'Loại công việc',
+                'Residence_type': 'Nơi ở',
+                'avg_glucose_level': 'Mức đường huyết trung bình',
+                'bmi': 'Chỉ số BMI',
+                'smoking_status': 'Tình trạng hút thuốc'
+            } %}
 
-    {% set value_mapping = {
-        'gender': {0: 'Nam', 1: 'Nữ'},
-        'hypertension': {0: 'Không', 1: 'Có'},
-        'heart_disease': {0: 'Không', 1: 'Có'},
-        'ever_married': {0: 'Chưa kết hôn', 1: 'Đã kết hôn'},
-        'work_type': {0: 'Việc văn phòng', 1: 'Công nhân', 2: 'Tự kinh doanh', 3: 'Trẻ em', 4: 'Khác'},
-        'Residence_type': {0: 'Nông thôn', 1: 'Thành thị'},
-        'smoking_status': {0: 'Không hút thuốc', 1: 'Đang hút thuốc', 2: 'Đã từng hút', 3: 'Không xác định'}
-    } %}
+            {% set value_mapping = {
+                'gender': {'0': 'Nam', '1': 'Nữ'},
+                'hypertension': {'0': 'Không', '1': 'Có'},
+                'heart_disease': {'0': 'Không', '1': 'Có'},
+                'ever_married': {'0': 'Chưa kết hôn', '1': 'Đã kết hôn'},
+                'work_type': {'0': 'Trẻ em/Học sinh/Sinh viên', '1': 'Nhân viên', '2': 'Tư nhân', '3': 'Tự kinh doanh', '4': 'Không có', '5': 'Khác'},
+                'Residence_type': {'0': 'Nông thôn', '1': 'Thành thị'},
+                'smoking_status': {'0': 'Không xác định', '1': 'Từng hút', '2': 'Chưa từng hút', '3': 'Đang hút'}
+            } %}
 
-    <tr>
-        <td>{{ record['timestamp'] }}</td>
-        <td><strong>{{ record['result'] }}%</strong></td>
-        <td>
-            <ul class="mb-0">
-                {% for k, v in record.items() if k not in ['id', 'user_id', 'result', 'timestamp'] %}
-                    <li>
-                        <strong>{{ field_mapping.get(k, k.replace('_', ' ') | capitalize) }}:</strong> 
-                        {% if value_mapping.get(k) %}
-                            {{ value_mapping[k].get(v|int, v) }}
-                        {% else %}
-                            {{ v }}
-                        {% endif %}
-                    </li>
-                {% endfor %}
-            </ul>
-        </td>
-    </tr>
-{% endfor %}
+            <tr>
+                <td>{{ record['timestamp'] }}</td>
+                <td><strong>{{ record['result'] }}%</strong></td>
+                <td>
+                    <ul class="mb-0">
+                        {% for k, v in record.items() if k not in ['id', 'user_id', 'result', 'timestamp'] %}
+                            <li>
+                                <strong>{{ field_mapping.get(k, k.replace('_', ' ') | capitalize) }}:</strong> 
+                                {% if value_mapping.get(k) %}
+                                    {{ value_mapping[k].get(v|int|string, v) }}
+                                {% elif k in ['age', 'avg_glucose_level', 'bmi'] %}
+                                    {{ '%.1f'|format(v|float) if v is not none else 'N/A' }}
+                                {% else %}
+                                    {{ v }}
+                                {% endif %}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </td>
+            </tr>
 
+
+            {% endfor %}
         </tbody>
     </table>
 
-{% else %}
-    <div class="alert alert-warning text-center">
-         Bạn chưa có lịch sử dự đoán nào.
-    </div>
-{% endif %}
-
+    {% else %}
+        <div class="alert alert-warning text-center">
+             Bạn chưa có lịch sử dự đoán nào.
+        </div>
+    {% endif %}
 
     <div class="d-flex justify-content-center mt-4">
         <a href="/predict" class="btn btn-primary"> Quay lại dự đoán</a>

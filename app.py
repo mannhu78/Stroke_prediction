@@ -29,9 +29,12 @@ STATIC_FOLDER = 'static'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(STATIC_FOLDER, exist_ok=True)
 # Load model
-model = pickle.load(open('model/stroke_rf.pkl', 'rb'))
+model,encoders = pickle.load(open('model/stroke_rf.pkl', 'rb'))
 face_model = joblib.load('model/face_model.pkl')
-
+categorical_cols = ['gender', 'ever_married', 'work_type', 'Residence_type', 'smoking_status']
+# In ra các class để kiểm tra
+for col in categorical_cols:
+    print(f"{col}: {encoders[col].classes_}")
 # ---------------------
 # Helper
 # ---------------------
@@ -104,40 +107,77 @@ def logout():
 def predict():
     if 'user_id' not in session:
         return redirect(url_for('login'))
-
+    
+    result = None
+    advice_title = ""
+    advice_items = []
+    
     if request.method == 'POST':
         try:
-            fields = ['gender', 'age', 'hypertension', 'heart_disease', 'ever_married',
-                      'work_type', 'Residence_type', 'avg_glucose_level', 'smoking_status']
-
-            input_data = {field: float(request.form[field]) for field in fields}
-
-            # Lấy chiều cao và cân nặng từ form
-            height = float(request.form['height'])  # đơn vị cm
-            weight = float(request.form['weight'])  # đơn vị kg
-
-            # Tính BMI
-            height_m = height / 100
-            bmi = weight / (height_m * height_m)
-
+            # Lấy input dạng string hoặc số phù hợp
+            input_data = {
+                'gender': request.form['gender'],
+                'age': float(request.form['age']),
+                'hypertension': int(request.form['hypertension']),
+                'heart_disease': int(request.form['heart_disease']),
+                'ever_married': request.form['ever_married'],
+                'work_type': request.form['work_type'],
+                'Residence_type': request.form['Residence_type'],
+                'avg_glucose_level': float(request.form['avg_glucose_level']),
+                'smoking_status': request.form['smoking_status'],
+            }
+            
+            # Tính BMI từ height(cm), weight(kg)
+            height_cm = float(request.form['height'])
+            weight_kg = float(request.form['weight'])
+            height_m = height_cm / 100
+            bmi = weight_kg / (height_m ** 2)
             input_data['bmi'] = round(bmi, 1)
 
-            data_np = np.array(list(input_data.values())).reshape(1, -1)
+            
 
-            # Dự đoán xác suất đột quỵ
-            prediction_proba = model.predict_proba(data_np)[0][1]
-            result = round(prediction_proba * 100, 2)
+            # Chuyển dữ liệu thành DataFrame theo đúng thứ tự cột khi train
+            feature_cols = ['gender', 'age', 'hypertension', 'heart_disease', 'ever_married',
+                            'work_type', 'Residence_type', 'avg_glucose_level', 'bmi', 'smoking_status']
+            df_input = pd.DataFrame([input_data], columns=feature_cols)
 
+            # Dự đoán xác suất đột quỵ (class 1)
+            proba = model.predict_proba(df_input)[0][1]
+            result = round(proba * 100, 2)
+
+            # Ghi kết quả vào DB hoặc file nếu cần
             save_prediction_to_db(session['user_id'], input_data, result)
 
-            return render_template('predict.html', result=result)
-        
+            # Gợi ý phòng ngừa
+            if result >= 70:
+                advice_title = "⚠️ Nguy cơ cao!"
+                advice_items = [
+                    "Khám sức khỏe chuyên sâu càng sớm càng tốt.",
+                    "Kiểm soát huyết áp, đường huyết, mỡ máu dưới sự theo dõi của bác sĩ.",
+                    "Tuyệt đối tránh hút thuốc, rượu bia.",
+                    "Thay đổi lối sống khẩn cấp: tập thể dục, ăn uống lành mạnh, giảm stress."
+                ]
+            elif result >= 30:
+                advice_title = "🔶 Nguy cơ trung bình"
+                advice_items = [
+                    "Theo dõi sức khỏe định kỳ 3-6 tháng/lần.",
+                    "Giảm thiểu căng thẳng và tăng cường vận động thể chất.",
+                    "Điều chỉnh chế độ ăn: ít muối, ít dầu mỡ, tăng rau xanh.",
+                    "Hạn chế hút thuốc, rượu bia nếu có."
+                ]
+            else:
+                advice_title = "✅ Nguy cơ thấp"
+                advice_items = [
+                    "Tiếp tục duy trì chế độ sinh hoạt lành mạnh.",
+                    "Tập thể dục đều đặn (30 phút/ngày, 5 ngày/tuần).",
+                    "Khám sức khỏe định kỳ để tầm soát sớm các yếu tố nguy cơ.",
+                    "Tránh hút thuốc lá và kiểm soát cân nặng."
+                ]
+
         except Exception as e:
             print("Error during prediction:", e)
-            return render_template('predict.html', result=None)
 
-    # Nếu method là GET thì cũng phải return
-    return render_template('predict.html')
+    return render_template('predict.html', result=result, advice_title=advice_title, advice_items=advice_items)
 
 
 

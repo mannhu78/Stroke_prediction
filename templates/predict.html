@@ -15,23 +15,39 @@
     <h2 class="mb-4 text-center">Dự đoán nguy cơ đột quỵ</h2>
    
     {% if result is defined %}
-        <div class="alert alert-info">
-            Nguy cơ đột quỵ ước tính: <strong>{{ result }}%</strong>
-        </div>
+    {% if result is not none %}
+    <div class="alert alert-info" role="alert">
+        Nguy cơ đột quỵ, ước tính: <strong>{{ result }}%</strong>
+    </div>
     {% endif %}
+    {% if result is not none %}
+    <div class="card mt-4">
+        <div class="card-header bg-warning text-dark">
+            {{ advice_title }}
+        </div>
+        <div class="card-body">
+            <ul>
+                {% for item in advice_items %}
+                    <li>{{ item }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    {% endif %}
+{% endif %}
+
     <form method="POST">
         <div class="row">
             <div class="col-md-6 mb-3">
                 <label>Giới tính:</label>
                 <select name="gender" class="form-select">
-                    <option value="1">Nam</option>
-                    <option value="0">Nữ</option>
-                    <option value="2">Khác</option>
+                    <option value="0">Nam</option>
+                    <option value="1">Nữ</option>
                 </select>
             </div>
             <div class="col-md-6 mb-3">
                 <label>Tuổi:</label>
-                <input type="number" name="age" class="form-control" required>
+                <input type="number" name="age" class="form-control" required min="0">
             </div>
         </div>
 
@@ -68,7 +84,7 @@
                 <option value="2">Tư nhân</option>
                 <option value="3">Tự kinh doanh</option>
                 <option value="4">Không có</option>
-                <option value="4">Khác</option>
+                <option value="5">Khác</option>
             </select>
         </div>
 
@@ -82,24 +98,23 @@
 
         <div class="row">
             <div class="col-md-6 mb-3">
-                <label>Mức đường huyết trung bình:</label>
-                <input type="number" step="0.01" name="avg_glucose_level" class="form-control" required>
+                <label>Mức đường huyết trung bình (mg/dL):</label>
+                <input type="number" step="0.01" name="avg_glucose_level" class="form-control" required min="0">
             </div>
             <div class="row">
                 <div class="col-md-4 mb-3">
                     <label>Chiều cao (cm):</label>
-                    <input type="number" step="0.1" name="height" id="height" class="form-control" required>
+                    <input type="number" step="0.1" name="height" id="height" class="form-control" required min="0">
                 </div>
                 <div class="col-md-4 mb-3">
                     <label>Cân nặng (kg):</label>
-                    <input type="number" step="0.1" name="weight" id="weight" class="form-control" required>
+                    <input type="number" step="0.1" name="weight" id="weight" class="form-control" required min="0">
                 </div>
                 <div class="col-md-4 mb-3">
                     <label>Chỉ số BMI:</label>
                     <input type="number" step="0.1" id="bmi" class="form-control" readonly>
                 </div>
             </div>
-            
         </div>
 
         <div class="mb-4">
@@ -114,35 +129,32 @@
 
         <button type="submit" class="btn btn-primary">Dự đoán</button>
         
-        
     </form>
+
     <div class="d-flex justify-content-center mt-4">
-            <a href="/history" class="btn btn-outline-primary">📜 Xem lịch sử dự đoán</a>
-        </div>
+        <a href="/history" class="btn btn-outline-primary">📜 Xem lịch sử dự đoán</a>
+    </div>
 </div>
+
 {% include 'footer.html' %}
 
 <script>
-    function calculateBMI() {
-        const height = parseFloat(document.getElementById('height').value);
-        const weight = parseFloat(document.getElementById('weight').value);
-    
-        if (height > 0 && weight > 0) {
-            const height_m = height / 100;
-            const bmi = weight / (height_m * height_m);
-            document.getElementById('bmi').value = bmi.toFixed(1);
-        } else {
-            document.getElementById('bmi').value = '';
-        }
+function calculateBMI() {
+    const height = parseFloat(document.getElementById('height').value);
+    const weight = parseFloat(document.getElementById('weight').value);
+
+    if (height > 0 && weight > 0) {
+        const height_m = height / 100;
+        const bmi = weight / (height_m * height_m);
+        document.getElementById('bmi').value = bmi.toFixed(1);
+    } else {
+        document.getElementById('bmi').value = '';
     }
-    
-    // Gắn sự kiện tính BMI mỗi khi nhập chiều cao hoặc cân nặng
-    document.getElementById('height').addEventListener('input', calculateBMI);
-    document.getElementById('weight').addEventListener('input', calculateBMI);
-    </script>
-    
+}
+
+document.getElementById('height').addEventListener('input', calculateBMI);
+document.getElementById('weight').addEventListener('input', calculateBMI);
+</script>
 
 </body>
-
 </html>
-
