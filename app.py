@@ -149,7 +149,7 @@ def predict():
             save_prediction_to_db(session['user_id'], input_data, result)
 
             # Gợi ý phòng ngừa
-            if result >= 70:
+            if result >= 60:
                 advice_title = "⚠️ Nguy cơ cao!"
                 advice_items = [
                     "Khám sức khỏe chuyên sâu càng sớm càng tốt.",
